@@ -2,20 +2,33 @@
 
 namespace App\DTO;
 
-class UserDTO
-{
-    private int $id;
-    private string $first_name;
-    private string $last_name;
-    private string $password;
-    private string $email;
-    private int $created;
-    private int $updated;
+use App\Base\DTO\DTOInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
-    public function setId(): ?int
+class UserDTO implements DTOInterface
+{
+    private ?int $id;
+    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\Length(min: 1, max: 64)]
+    private string $first_name;
+    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\Length(min: 1, max: 64)]
+    private string $last_name;
+    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\Length(min: 1, max: 64, groups: ['create'])]
+    private string $password;
+    #[Assert\Email]
+    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\Length(min: 1, max: 64)]
+    private string $email;
+
+    public function setId(?int $id): static
     {
-        return $this->id;
+        $this->id = $id;
+
+        return $this;
     }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -65,30 +78,6 @@ class UserDTO
     public function setEmail(?string $email): static
     {
         $this->email = $email;
-
-        return $this;
-    }
-
-    public function getCreated(): ?int
-    {
-        return $this->created;
-    }
-
-    public function setCreated(int $created): static
-    {
-        $this->created = $created;
-
-        return $this;
-    }
-
-    public function getUpdated(): ?int
-    {
-        return $this->updated;
-    }
-
-    public function setUpdated(int $updated): static
-    {
-        $this->updated = $updated;
 
         return $this;
     }

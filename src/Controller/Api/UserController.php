@@ -1,43 +1,43 @@
 <?php
 namespace App\Controller\Api;
 
+use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Service\UserService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/user', name: 'api_user_')]
-class UserController extends AbstractController
+class UserController extends BaseController
 {
+    protected SerializerInterface $serializer;
 
-    protected \App\Service\UserService $service;
-
-    public function __construct(UserService $service)
+    public function __construct(UserService $service, UserDTO $dto, SerializerInterface $serializer)
     {
         $this->service = $service;
+        $this->dto = $dto;
+        $this->serializer = $serializer;
     }
 
-    #[Route('/number', name: 'number', methods: ['GET'])]
-    public function number(Request $request): JsonResponse
+    private function setDTO(Request $request): static
     {
-        $number = random_int(0, 100);
+        $data = json_decode($request->getContent(), true);
+        $this->dto->setId($data['id'] ?? null)
+            ->setLastName($data['lastName'] ?? '')
+            ->setFirstName($data['firstName'] ?? '')
+            ->setPassword($data['password'] ?? '')
+            ->setEmail($data['email'] ?? '');
 
-        return $this->json([
-                               'message' => $this->service->getMessage(),
-                               'number' => $number,
-                               'attr' => $request->attributes,
-                               'url' => $this->generateUrl('api_user_number'),
-                           ]);
+        return $this;
     }
 
-
-    //todo: validations
     #[Route('/{id}', name: 'view', methods: ['GET'])]
     public function view(User $user): JsonResponse
     {
-        return $this->json((array)$user);
+        return $this->json($this->serializer->normalize($user));
     }
 
     #[Route('/', name: 'search', methods: ['GET'])]
@@ -45,46 +45,39 @@ class UserController extends AbstractController
     {
         $params = $request->query->all();
         $result = $this->service->getByParams($params);
-        dd($result);
+
+        return $this->json($this->serializer->normalize($result));
     }
 
 
     #[Route('/', name: 'create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
+    public function create(Request $request, ValidatorInterface $validator): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $user = new User();
+        $this->setDTO($request)
+            ->validateDTO($validator, ['create']);
 
-        $user->setLastName($data['lastName']);
-        $user->setFirstName($data['firstName']);
-        $user->setPassword($data['password']);
-        $user->setEmail($data['email']);
-        $user->setCreated(time());
-        $user->setUpdated(time());
-
+        $user = $this->container->get('dto.transformer')->DTOToObject($this->dto,  new User())
+            ->setCreated(time())
+            ->setUpdated(time());
         $user = $this->service->create($user);
 
-        return $this->json((array)$user);
+        return $this->json($this->serializer->normalize($user));
     }
 
-    #[Route('/', name: 'update', methods: ['PUT'])]
-    public function update(Request $request): JsonResponse
+    #[Route('/{id}', name: 'update', methods: ['PUT'])]
+    public function update(User $entity, Request $request, ValidatorInterface $validator): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $user = $this->service->getById($data['id']);
+        $this->setDTO($request)
+            ->validateDTO($validator);
 
-        $user->setLastName($data['lastName'] ?? $user->getLastName());
-        $user->setFirstName($data['firstName'] ?? $user->getFirstName());
-        $user->setPassword($data['password'] ?? $user->getPassword());
-        $user->setEmail($data['email'] ?? $user->getEmail());
-        $user->setUpdated(time());
-
+        $user = $this->container->get('dto.transformer')->DTOToObject($this->dto, $entity)
+            ->setUpdated(time());
         $user = $this->service->update($user);
 
         return $this->json([
-            $this->service->getMessage(),
-            (array)$user],
-        );
+                $this->service->getMessage(),
+                $this->serializer->normalize($user)
+            ]);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
@@ -94,7 +87,7 @@ class UserController extends AbstractController
 
         return $this->json([
             $this->service->getMessage(),
-            (array)$user,
+            $this->serializer->normalize($user),
         ]);
     }
 }
