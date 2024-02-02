@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Service\UserService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,23 +16,10 @@ class UserController extends BaseController
 {
     protected SerializerInterface $serializer;
 
-    public function __construct(UserService $service, UserDTO $dto, SerializerInterface $serializer)
+    public function __construct(UserService $service, SerializerInterface $serializer)
     {
         $this->service = $service;
-        $this->dto = $dto;
         $this->serializer = $serializer;
-    }
-
-    private function setDTO(Request $request): static
-    {
-        $data = json_decode($request->getContent(), true);
-        $this->dto->setId($data['id'] ?? null)
-            ->setLastName($data['lastName'] ?? '')
-            ->setFirstName($data['firstName'] ?? '')
-            ->setPassword($data['password'] ?? '')
-            ->setEmail($data['email'] ?? '');
-
-        return $this;
     }
 
     #[Route('/{id}', name: 'view', methods: ['GET'])]
@@ -51,10 +39,10 @@ class UserController extends BaseController
 
 
     #[Route('/', name: 'create', methods: ['POST'])]
-    public function create(Request $request, ValidatorInterface $validator): JsonResponse
+    #[ParamConverter("dto", converter: "fos_rest.request_body")]
+    public function create(UserDTO $dto, ValidatorInterface $validator): JsonResponse
     {
-        $this->setDTO($request)
-            ->validateDTO($validator, ['create']);
+        $this->validateDTO($dto, $validator, ['create']);
 
         $user = $this->container->get('dto.transformer')->DTOToObject($this->dto,  new User())
             ->setCreated(time())
@@ -65,12 +53,12 @@ class UserController extends BaseController
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
-    public function update(User $entity, Request $request, ValidatorInterface $validator): JsonResponse
+    #[ParamConverter("dto", converter: "fos_rest.request_body")]
+    public function update(User $entity, UserDTO $dto, ValidatorInterface $validator): JsonResponse
     {
-        $this->setDTO($request)
-            ->validateDTO($validator);
+        $this->validateDTO($dto,$validator);
 
-        $user = $this->container->get('dto.transformer')->DTOToObject($this->dto, $entity)
+        $user = $this->container->get('dto.transformer')->DTOToObject($dto, $entity)
             ->setUpdated(time());
         $user = $this->service->update($user);
 

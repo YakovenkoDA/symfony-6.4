@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 abstract class BaseController extends AbstractController
 {
     protected \App\Service\UserService $service;
-    protected DTOInterface $dto;
+
     public static function getSubscribedServices(): array
     {
         $subscribedServices = parent::getSubscribedServices();
@@ -22,9 +22,9 @@ abstract class BaseController extends AbstractController
         return $subscribedServices;
     }
 
-    public function validateDTO(ValidatorInterface $validator, $groups = [])
+    public function validateDTO(DTOInterface $dto, ValidatorInterface $validator, $groups = [])
     {
-        $errors = $validator->validate($this->dto, null, $groups);
+        $errors = $validator->validate($dto, null, $groups);
         if (count($errors) > 0) {
             throw new BadRequestHttpException((string)$errors);
         }
