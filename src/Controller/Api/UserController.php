@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 #[Route('/api/user', name: 'api_user_')]
 class UserController extends BaseController
@@ -39,14 +39,16 @@ class UserController extends BaseController
 
 
     #[Route('/', name: 'create', methods: ['POST'])]
-    #[ParamConverter("dto", converter: "fos_rest.request_body")]
-    public function create(UserDTO $dto, ValidatorInterface $validator): JsonResponse
+    #[ParamConverter("dto",
+        options: ["validator" => ["groups" => ['Create', 'Default']]],
+        converter: "fos_rest.request_body")]
+    public function create(UserDTO $dto, ConstraintViolationListInterface $errorList): JsonResponse
     {
-        $this->validateDTO($dto, $validator, ['create']);
-
-        $user = $this->container->get('dto.transformer')->DTOToObject($this->dto,  new User())
+        $this->handleValidationErrors($errorList);
+        $user = $this->container->get('dto.transformer')->DTOToObject($dto,  new User())
             ->setCreated(time())
             ->setUpdated(time());
+
         $user = $this->service->create($user);
 
         return $this->json($this->serializer->normalize($user));
@@ -54,9 +56,9 @@ class UserController extends BaseController
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
     #[ParamConverter("dto", converter: "fos_rest.request_body")]
-    public function update(User $entity, UserDTO $dto, ValidatorInterface $validator): JsonResponse
+    public function update(User $entity, UserDTO $dto, ConstraintViolationListInterface $errorList): JsonResponse
     {
-        $this->validateDTO($dto,$validator);
+        $this->handleValidationErrors($errorList);
 
         $user = $this->container->get('dto.transformer')->DTOToObject($dto, $entity)
             ->setUpdated(time());

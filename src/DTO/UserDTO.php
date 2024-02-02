@@ -8,17 +8,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 class UserDTO implements DTOInterface
 {
     private ?int $id;
-    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\NotBlank(groups: ['Create'])]
     #[Assert\Length(min: 1, max: 64)]
     private string $first_name;
-    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\NotBlank(groups: ['Create'])]
     #[Assert\Length(min: 1, max: 64)]
     private string $last_name;
-    #[Assert\NotBlank(groups: ['create'])]
-    #[Assert\Length(min: 1, max: 64, groups: ['create'])]
+    #[Assert\NotBlank(groups: ['Create'])]
+    #[Assert\Length(min: 6, max: 64, groups: ['Create'])]
+    #[Assert\PasswordStrength]
     private string $password;
     #[Assert\Email]
-    #[Assert\NotBlank(groups: ['create'])]
+    #[Assert\NotBlank(groups: ['Create'])]
     #[Assert\Length(min: 1, max: 64)]
     private string $email;
 

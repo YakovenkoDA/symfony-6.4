@@ -2,12 +2,11 @@
 
 namespace App\Controller\Api;
 
-use App\Base\DTO\DTOInterface;
 use App\Base\DTO\Transformer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 abstract class BaseController extends AbstractController
 {
@@ -22,9 +21,8 @@ abstract class BaseController extends AbstractController
         return $subscribedServices;
     }
 
-    public function validateDTO(DTOInterface $dto, ValidatorInterface $validator, $groups = [])
+    public function handleValidationErrors(ConstraintViolationListInterface $errors)
     {
-        $errors = $validator->validate($dto, null, $groups);
         if (count($errors) > 0) {
             throw new BadRequestHttpException((string)$errors);
         }
