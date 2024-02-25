@@ -11,6 +11,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^2.17",
         "friendsofsymfony/rest-bundle": "^3.6",
+        "league/oauth2-server-bundle": "^0.6.0",
         "sensio/framework-extra-bundle": "^6.2",
         "symfony/console": "6.4.*",
         "symfony/dotenv": "6.4.*",

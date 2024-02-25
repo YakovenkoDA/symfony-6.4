@@ -28,3 +28,9 @@ services:
     dto.transformer:
         class: App\Base\DTO\Transformer
         public: true
+
+    # listeners
+    App\EventListener\UserResolveListener:
+        class: App\EventListener\UserResolveListener
+        tags:
+            - { name: kernel.event_listener, event: league.oauth2_server.event.user_resolve, method: onUserResolve }

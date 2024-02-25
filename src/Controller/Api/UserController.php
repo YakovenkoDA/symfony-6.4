@@ -45,9 +45,11 @@ class UserController extends BaseController
     public function create(UserDTO $dto, ConstraintViolationListInterface $errorList): JsonResponse
     {
         $this->handleValidationErrors($errorList);
-        $user = $this->container->get('dto.transformer')->DTOToObject($dto,  new User())
-            ->setCreated(time())
-            ->setUpdated(time());
+        $user = $this->container->get('dto.transformer')->DTOToObject($dto, new User());
+        $user->setCreated(time())
+            ->setUpdated(time())
+            ->setRoles([UserService::ROLE_USER])
+            ->setPassword($this->service->hashPassword($user, $user->getPassword()));
 
         $user = $this->service->create($user);
 

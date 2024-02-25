@@ -4,16 +4,21 @@ namespace App\Service;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService
 {
 
     private \Doctrine\ORM\EntityManagerInterface $em;
     private \Doctrine\ORM\EntityRepository $repository;
+    private  UserPasswordHasherInterface $hashPassword;
+    const ROLE_ADMIN = 'ADMIN';
+    const ROLE_USER = 'USER';
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em, UserPasswordHasherInterface $hasher)
     {
         $this->em = $em;
+        $this->hashPassword = $hasher;
         $this->repository = $this->em->getRepository(User::class);
     }
 
@@ -66,5 +71,14 @@ class UserService
         $this->em->refresh($user);
 
         return $user;
+    }
+    public function hashPassword(User $user, $plainPassword)
+    {
+        return $this->hashPassword->hashPassword($user, $plainPassword);
+    }
+
+    public function getUserByEmail(string $email): User|null
+    {
+        return $this->repository->findOneBy(['email' => $email]);
     }
 }
