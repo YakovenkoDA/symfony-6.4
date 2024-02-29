@@ -1,6 +1,7 @@
 <?php
 namespace App\Controller\Api;
 
+use App\DTO\ChangePasswordDTO;
 use App\DTO\UserDTO;
 use App\Entity\User;
 use App\Service\UserService;
@@ -8,24 +9,20 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 #[Route('/api/user', name: 'api_user_')]
 class UserController extends BaseController
 {
-    protected SerializerInterface $serializer;
-
-    public function __construct(UserService $service, SerializerInterface $serializer)
+    public function __construct( protected UserService $service)
     {
-        $this->service = $service;
-        $this->serializer = $serializer;
+
     }
 
     #[Route('/{id}', name: 'view', methods: ['GET'])]
     public function view(User $user): JsonResponse
     {
-        return $this->json($this->serializer->normalize($user));
+        return $this->json($user);
     }
 
     #[Route('/', name: 'search', methods: ['GET'])]
@@ -34,7 +31,7 @@ class UserController extends BaseController
         $params = $request->query->all();
         $result = $this->service->getByParams($params);
 
-        return $this->json($this->serializer->normalize($result));
+        return $this->json($result);
     }
 
 
@@ -46,14 +43,9 @@ class UserController extends BaseController
     {
         $this->handleValidationErrors($errorList);
         $user = $this->container->get('dto.transformer')->DTOToObject($dto, new User());
-        $user->setCreated(time())
-            ->setUpdated(time())
-            ->setRoles([UserService::ROLE_USER])
-            ->setPassword($this->service->hashPassword($user, $user->getPassword()));
-
         $user = $this->service->create($user);
 
-        return $this->json($this->serializer->normalize($user));
+        return $this->json($user);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
@@ -61,14 +53,27 @@ class UserController extends BaseController
     public function update(User $entity, UserDTO $dto, ConstraintViolationListInterface $errorList): JsonResponse
     {
         $this->handleValidationErrors($errorList);
-
-        $user = $this->container->get('dto.transformer')->DTOToObject($dto, $entity)
-            ->setUpdated(time());
+        $user = $this->container->get('dto.transformer')->DTOToObject($dto, $entity);
         $user = $this->service->update($user);
 
         return $this->json([
                 $this->service->getMessage(),
-                $this->serializer->normalize($user)
+                $user
+            ]);
+    }
+
+    #[Route('/{id}/changePassword', name: 'changePassword', methods: ['PUT'])]
+    #[ParamConverter("dto", converter: "fos_rest.request_body")]
+    public function changePassword(User $entity, ChangePasswordDTO $dto, ConstraintViolationListInterface $errorList): JsonResponse
+    {
+        $this->handleValidationErrors($errorList);
+        $entity->setPassword($this->service->hashPassword($entity, $dto->getPassword()));
+
+        $user = $this->service->update($entity);
+
+        return $this->json([
+                $this->service->getMessage(),
+                $user
             ]);
     }
 
@@ -79,7 +84,7 @@ class UserController extends BaseController
 
         return $this->json([
             $this->service->getMessage(),
-            $this->serializer->normalize($user),
+            $user,
         ]);
     }
 }

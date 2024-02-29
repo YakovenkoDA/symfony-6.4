@@ -13,32 +13,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180, unique: true)]
+    #[ORM\Column(type: "string", length: 180, unique: true)]
     private ?string $email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "json")]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
-    #[ORM\Column]
+    #[ORM\Column(type: "string")]
     private ?string $password = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
     private ?string $first_name = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
     private ?string $last_name = null;
 
-    #[ORM\Column]
-    private ?int $created = null;
+    #[ORM\Column(type: "datetime")]
+    private ?\DateTime $created = null;
 
-    #[ORM\Column]
-    private ?int $updated = null;
+    #[ORM\Column(type: "datetime")]
+    private ?\DateTime $updated = null;
 
     public function getId(): ?int
     {
@@ -64,7 +64,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
     /**
@@ -134,24 +134,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getCreated(): ?int
+    public function getCreated(): ?\DateTime
     {
         return $this->created;
     }
 
-    public function setCreated(int $created): static
+    public function setCreated(?\DateTime $created): static
     {
         $this->created = $created;
 
         return $this;
     }
 
-    public function getUpdated(): ?int
+    public function getUpdated(): ?\DateTime
     {
         return $this->updated;
     }
 
-    public function setUpdated(int $updated): static
+    public function setUpdated(?\DateTime $updated): static
     {
         $this->updated = $updated;
 

@@ -10,8 +10,6 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 abstract class BaseController extends AbstractController
 {
-    protected \App\Service\UserService $service;
-
     public static function getSubscribedServices(): array
     {
         $subscribedServices = parent::getSubscribedServices();

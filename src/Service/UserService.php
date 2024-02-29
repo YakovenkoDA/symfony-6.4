@@ -47,6 +47,11 @@ class UserService
 
     public function create(User $user): User
     {
+        $user->setCreated(new \DateTime('now'))
+            ->setUpdated(new \DateTime('now'))
+            ->setRoles([UserService::ROLE_USER])
+            ->setPassword($this->hashPassword($user, $user->getPassword()));
+
         $this->em->persist($user);
         $this->em->flush();
         $this->em->refresh($user);
@@ -56,6 +61,8 @@ class UserService
 
     public function update(User $user): User
     {
+        $user->setUpdated(new \DateTime('now'));
+
         $this->em->persist($user);
         $this->em->flush();
         $this->em->refresh($user);
