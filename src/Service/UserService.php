@@ -2,23 +2,23 @@
 
 namespace App\Service;
 
+use App\Entity\Friendship;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\Expr\Join;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService
 {
-
-    private \Doctrine\ORM\EntityManagerInterface $em;
     private \Doctrine\ORM\EntityRepository $repository;
-    private  UserPasswordHasherInterface $hashPassword;
     const ROLE_ADMIN = 'ADMIN';
     const ROLE_USER = 'USER';
 
-    public function __construct(EntityManagerInterface $em, UserPasswordHasherInterface $hasher)
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly UserPasswordHasherInterface $hashPassword
+    )
     {
-        $this->em = $em;
-        $this->hashPassword = $hasher;
         $this->repository = $this->em->getRepository(User::class);
     }
 
@@ -87,5 +87,17 @@ class UserService
     public function getUserByEmail(string $email): User|null
     {
         return $this->repository->findOneBy(['email' => $email]);
+    }
+
+    public function getFriendList(User $user): array
+    {
+        $qb = $this->repository->createQueryBuilder('u');
+        $qb->join(Friendship::class, 'fr', Join::WITH, 'fr.sender = u.id')
+            ->where("fr.recipient = :id")
+            ->andWhere("fr.status = :status")
+            ->setParameter('id', $user->getId())
+            ->setParameter('status', FriendshipService::STATUS_ACCEPT);
+
+        return $qb->getQuery()->getResult();
     }
 }

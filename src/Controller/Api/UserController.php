@@ -34,6 +34,13 @@ class UserController extends BaseController
         return $this->json($result);
     }
 
+    #[Route('/{id}/friends', name: 'friend_list', methods: ['GET'])]
+    public function friendList(User $user): JsonResponse
+    {
+        $result = $this->service->getFriendList($user);
+
+        return $this->json($result);
+    }
 
     #[Route('/', name: 'create', methods: ['POST'])]
     #[ParamConverter("dto",
