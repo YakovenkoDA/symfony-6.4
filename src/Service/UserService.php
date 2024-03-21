@@ -92,9 +92,11 @@ class UserService
     public function getFriendList(User $user): array
     {
         $qb = $this->repository->createQueryBuilder('u');
-        $qb->join(Friendship::class, 'fr', Join::WITH, 'fr.sender = u.id')
+        $qb->join(Friendship::class, 'fr', Join::WITH, 'fr.sender = u.id OR fr.recipient = u.id')
             ->where("fr.recipient = :id")
+            ->orWhere("fr.sender = :id")
             ->andWhere("fr.status = :status")
+            ->andWhere("u.id != :id")
             ->setParameter('id', $user->getId())
             ->setParameter('status', FriendshipService::STATUS_ACCEPT);
 

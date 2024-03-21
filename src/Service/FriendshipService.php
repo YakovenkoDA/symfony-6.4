@@ -3,7 +3,9 @@
 namespace App\Service;
 
 use App\Entity\Friendship;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class FriendshipService
 {
@@ -13,7 +15,8 @@ class FriendshipService
     const STATUS_DECLINE = 2;
 
     public function __construct(
-        private readonly EntityManagerInterface $em
+        private readonly EntityManagerInterface $em,
+        private readonly Security $security
     )
     {
         $this->repository = $this->em->getRepository(Friendship::class);
@@ -24,9 +27,13 @@ class FriendshipService
         return $this->repository->findBy($params);
     }
 
-    public function create(Friendship $entity): Friendship
+    public function create(User $recipient): Friendship
     {
-        $entity->setStatus(self::STATUS_SENT)
+        $user = $this->security->getUser();
+        $entity = new Friendship();
+        $entity->setSender($user)
+            ->setRecipient($recipient)
+            ->setStatus(self::STATUS_SENT)
             ->setCreated(new \DateTime('now'))
             ->setUpdated(new \DateTime('now'));
 

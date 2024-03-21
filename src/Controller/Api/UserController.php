@@ -19,10 +19,20 @@ class UserController extends BaseController
 
     }
 
-    #[Route('/{id}', name: 'view', methods: ['GET'])]
-    public function view(User $user): JsonResponse
+    #[Route('/profile', name: 'profile', methods: ['GET'])]
+    public function profile(): JsonResponse
     {
+        $user = $this->getUser();
         return $this->json($user);
+    }
+
+    #[Route('/friends', name: 'friend_list', methods: ['GET'])]
+    public function friendList(): JsonResponse
+    {
+        $user = $this->getUser();
+        $result = $this->service->getFriendList($user);
+
+        return $this->json($result);
     }
 
     #[Route('/', name: 'search', methods: ['GET'])]
@@ -30,14 +40,6 @@ class UserController extends BaseController
     {
         $params = $request->query->all();
         $result = $this->service->getByParams($params);
-
-        return $this->json($result);
-    }
-
-    #[Route('/{id}/friends', name: 'friend_list', methods: ['GET'])]
-    public function friendList(User $user): JsonResponse
-    {
-        $result = $this->service->getFriendList($user);
 
         return $this->json($result);
     }
@@ -52,6 +54,12 @@ class UserController extends BaseController
         $user = $this->container->get('dto.transformer')->DTOToObject($dto, new User());
         $user = $this->service->create($user);
 
+        return $this->json($user);
+    }
+
+    #[Route('/{id}', name: 'view', methods: ['GET'])]
+    public function view(User $user): JsonResponse
+    {
         return $this->json($user);
     }
 

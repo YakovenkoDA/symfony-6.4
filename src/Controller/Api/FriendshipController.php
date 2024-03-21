@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Service\FriendshipService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/friendship', name: 'api_friendship_')]
@@ -37,14 +38,9 @@ class FriendshipController extends BaseController
     }
 
     #[Route('/{id}', name: 'add', methods: ['POST'])]
-    public function add(User $recipient, Security $security): JsonResponse
+    public function add(User $recipient): JsonResponse
     {
-        $user = $security->getUser();
-        $entity = new Friendship();
-        $entity->setSender($user)
-            ->setRecipient($recipient);
-
-        $friendship = $this->service->create($entity);
+        $friendship = $this->service->create($recipient);
 
         return $this->json($friendship);
     }
@@ -52,6 +48,10 @@ class FriendshipController extends BaseController
     #[Route('/{id}/accept', name: 'accept', methods: ['PUT'])]
     public function accept(Friendship $entity): JsonResponse
     {
+        $user = $this->getUser();
+        if ($user->getId() != $entity->getRecipient()->getId()) {
+            throw new AccessDeniedHttpException();
+        }
         $friendship = $this->service->changeStatus($entity, FriendshipService::STATUS_ACCEPT);
 
         return $this->json($friendship);
@@ -60,6 +60,11 @@ class FriendshipController extends BaseController
     #[Route('/{id}/decline', name: 'decline', methods: ['PUT'])]
     public function decline(Friendship $entity): JsonResponse
     {
+        $user = $this->getUser();
+        if ($user->getId() != $entity->getRecipient()->getId()) {
+            throw new AccessDeniedHttpException();
+        }
+
         $friendship = $this->service->changeStatus($entity, FriendshipService::STATUS_DECLINE);
 
         return $this->json($friendship);
@@ -68,6 +73,10 @@ class FriendshipController extends BaseController
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(Friendship $entity): JsonResponse
     {
+        $user = $this->getUser();
+        if ($user->getId() != $entity->getSender()->getId()) {
+            throw new AccessDeniedHttpException();
+        }
         $result = $this->service->delete($entity);
         return $this->json([$result]);
     }
